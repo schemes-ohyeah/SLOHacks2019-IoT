@@ -1,14 +1,15 @@
-import time
+from firebase import Collection
 
 from flask import Flask
 app = Flask(__name__)
 
+collection = Collection()
 
 @app.route("/")
 def index():
     print("let's do gyroscope stuff lululul")
-    time.sleep(3)
     print("done let's upload this stuff to google hahaha")
+    collection.dataup()
     return "Hello world!"
 
 
