@@ -6,6 +6,7 @@ from flask import request
 import mraa
 import time
 import threading
+import json
 
 x = mraa.I2c(0)
 x.address(0x6B)
@@ -27,20 +28,22 @@ readings_list = []
 def light_thread():
     def run():
         global light_on
-        while light_on:
-            x_lsb = x.readReg(0x18)
-            x_msb = x.readReg(0x19)
-            x_final = (x_msb << 8) | x_lsb
-            y_lsb = x.readReg(0x1A)
-            y_msb = x.readReg(0x1B)
-            y_final = (y_msb << 8) | y_lsb
-            z_lsb = x.readReg(0x1C)
-            z_msb = x.readReg(0x1D)
-            z_final = (z_msb << 8) | z_lsb
-            reading = (round(x_final * 0.00875, 3), round(y_final * 0.00875, 3), round(z_final * 0.00875, 3))
-            global readings_list
-            readings_list.append(reading)
-            time.sleep(0.1)
+        while True:
+            if light_on:
+                x_lsb = x.readReg(0x18)
+                x_msb = x.readReg(0x19)
+                x_final = (x_msb << 8) | x_lsb
+                y_lsb = x.readReg(0x1A)
+                y_msb = x.readReg(0x1B)
+                y_final = (y_msb << 8) | y_lsb
+                z_lsb = x.readReg(0x1C)
+                z_msb = x.readReg(0x1D)
+                z_final = (z_msb << 8) | z_lsb
+                reading = (round(x_final * 0.00875, 3), round(y_final * 0.00875, 3), round(z_final * 0.00875, 3))
+                global readings_list
+                readings_list.append(reading)
+                print("keep going")
+                time.sleep(0.1)
 
     thread = threading.Thread(target=run)
     thread.start()
@@ -71,13 +74,16 @@ def start():
     readings_list = []
     global light_on
     light_on = True
+    print("hello")
+    return "swag"
 
 @app.route("/stop")
 def stop():
     global light_on
     light_on = False
+    global readings_list
     gyro_data = readings_list
-    return gyro_data
+    return json.dumps(gyro_data)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)
