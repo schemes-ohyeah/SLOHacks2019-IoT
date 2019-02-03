@@ -2,12 +2,14 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 import datetime
+import json
+import random
 
+cred = credentials.Certificate('dragon.json')
+firebase_admin.initialize_app(cred)
 
 class Collection:
     def __init__(self):
-        cred = credentials.Certificate('dragon.json')
-        firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
     def dataup(self):
@@ -27,8 +29,14 @@ class Collection:
 
     def create_sub(self, command_id, gyro_data):
         print("Create sub g data", gyro_data)
+        new_id = self.generate_random_id()
         command_a_ref = self.db.collection(u'commands').document(command_id)
-        return command_a_ref.collection(u'attempts').add({
-            u'measurements': gyro_data,
-            u'timestamp': datetime.datetime.now().isoformat()
+        command_a_ref.collection(u'attempts').document(new_id).set({
+            u'measurements': json.dumps(gyro_data),
+            u'timestamp': str(datetime.datetime.utcnow().isoformat())+"Z"
         })
+
+        return new_id
+        
+    def generate_random_id(self):
+        return "".join([random.choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890") for x in range(20)])

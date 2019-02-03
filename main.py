@@ -1,6 +1,7 @@
 from firebase import Collection
 
 from flask import Flask, request
+from flask_cors import CORS
 
 import mraa
 import time
@@ -17,6 +18,8 @@ x.writeReg(0x10, 0xC0)
 light_on = False
 
 app = Flask(__name__)
+
+CORS(app)
 
 readings_list = []
 command_id: str = ""
