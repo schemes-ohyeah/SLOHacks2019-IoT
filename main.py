@@ -49,21 +49,35 @@ def light_thread():
 def index():
     print("let's do gyroscope stuff lululul")
     print("done let's upload this stuff to google hahaha")
-    if request.method == 'POST':
-        # begin recording
-        global readings_list
-        readings_list = []
-        global light_on
-        light_on = True
-        command_id = request.values.get('command_id')
-    else:
-        # end recording and upload attempt to subcollection for command
-        global light_on
-        light_on = False
-        gyro_data = readings_list
-        print(gyro_data)
-        # collection.create_sub(command_id, gyro_data)
+    #if request.method == 'POST':
+    #    # begin recording
+    #    global readings_list
+    #    readings_list = []
+    #    global light_on
+    #    light_on = True
+    #    command_id = request.values.get('command_id')
+    #else:
+    #    # end recording and upload attempt to subcollection for command
+    #    global light_on
+    #    light_on = False
+    #    gyro_data = readings_list
+    #    print(gyro_data)
+    #    # collection.create_sub(command_id, gyro_data)
     return "Hello world!"
 
+@app.route("/start")
+def start():
+    global readings_list
+    readings_list = []
+    global light_on
+    light_on = True
+
+@app.route("/stop")
+def stop():
+    global light_on
+    light_on = False
+    gyro_data = readings_list
+    return gyro_data
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True, threaded = True)
+    app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)
