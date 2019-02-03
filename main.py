@@ -1,12 +1,10 @@
 from firebase import Collection
 
-from flask import Flask
-from flask import request
+from flask import Flask, request
 
 import mraa
 import time
 import threading
-import json
 
 x = mraa.I2c(0)
 x.address(0x6B)
@@ -20,14 +18,15 @@ light_on = False
 
 app = Flask(__name__)
 
-collection = Collection()
-
 readings_list = []
+command_id: str = ""
+
 
 @app.before_first_request
 def light_thread():
     def run():
-        global light_on
+        global light_on, readings_list
+
         while True:
             if light_on:
                 x_lsb = x.readReg(0x18)
@@ -40,50 +39,51 @@ def light_thread():
                 z_msb = x.readReg(0x1D)
                 z_final = (z_msb << 8) | z_lsb
                 reading = (round(x_final * 0.00875, 3), round(y_final * 0.00875, 3), round(z_final * 0.00875, 3))
-                global readings_list
                 readings_list.append(reading)
-                print("keep going")
                 time.sleep(0.1)
 
     thread = threading.Thread(target=run)
     thread.start()
 
+
 @app.route("/", methods=['GET', 'POST'])
 def index():
-    print("let's do gyroscope stuff lululul")
-    print("done let's upload this stuff to google hahaha")
-    #if request.method == 'POST':
-    #    # begin recording
-    #    global readings_list
-    #    readings_list = []
-    #    global light_on
-    #    light_on = True
-    #    command_id = request.values.get('command_id')
-    #else:
-    #    # end recording and upload attempt to subcollection for command
-    #    global light_on
-    #    light_on = False
-    #    gyro_data = readings_list
-    #    print(gyro_data)
-    #    # collection.create_sub(command_id, gyro_data)
-    return "Hello world!"
+    global light_on
+    if request.method == "POST":
+        if light_on:
+            return "", 400
+        else:
+            return start(request.get_json().get("command_id"))
+    else:
+        if not light_on:
+            return "", 400
+        else:
+            return stop()
 
-@app.route("/start")
-def start():
-    global readings_list
+
+def start(cmd):
+    """
+    Begins recording of gryo data to the global readings_list
+    """
+    global readings_list, light_on, command_id
+    command_id = cmd
     readings_list = []
-    global light_on
     light_on = True
-    print("hello")
-    return "swag"
+    return "", 201
 
-@app.route("/stop")
+
 def stop():
-    global light_on
+    """
+    End recording and upload attempt to subcollection for command
+    """
+    global light_on, readings_list
     light_on = False
-    global readings_list
     gyro_data = readings_list
-    return json.dumps(gyro_data)
+    collection = Collection()
+    a = collection.create_sub(command_id, gyro_data)
+    print("collection response", a)
+    return a
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)

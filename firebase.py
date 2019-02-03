@@ -10,7 +10,6 @@ class Collection:
         firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
-
     def dataup(self):
         doc_ref = self.db.collection(u'users').document(u'alovelace')
         doc_ref.set({
@@ -27,8 +26,9 @@ class Collection:
             print(u'{} => {}'.format(doc.id, doc.to_dict()))
 
     def create_sub(self, command_id, gyro_data):
+        print("Create sub g data", gyro_data)
         command_a_ref = self.db.collection(u'commands').document(command_id)
-        command_a_ref.collection(u'attempts').add({
-            u'gyroData': gyro_data,
+        return command_a_ref.collection(u'attempts').add({
+            u'measurements': gyro_data,
             u'timestamp': datetime.datetime.now().isoformat()
         })
